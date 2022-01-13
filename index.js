@@ -9,6 +9,7 @@ class ServerlessStepFunctionsLocal {
     this.serverless = serverless;
     this.service = serverless.service;
     this.options = options;
+    this.stage = this.options.stage ?? 'dev';
 
     this.log = serverless.cli.log.bind(serverless.cli);
     this.config = (this.service.custom && this.service.custom.stepFunctionsLocal) || {};
@@ -23,7 +24,7 @@ class ServerlessStepFunctionsLocal {
     }
 
     if (!this.config.lambdaEndpoint) {
-      this.config.lambdaEndpoint = 'http://localhost:4000';
+      this.config.lambdaEndpoint = 'http://localhost:3002';
     }
 
     if (!this.config.path) {
@@ -214,7 +215,7 @@ class ServerlessStepFunctionsLocal {
       switch (state.Type) {
         case 'Task':
           if (state.Resource && state.Resource['Fn::GetAtt'] && Array.isArray(state.Resource['Fn::GetAtt'])) {
-            state.Resource = `arn:aws:lambda:${this.config.region}:${this.config.accountId}:function:${this.service.service}-${this.serverless.stage ? this.serverless.stage : 'dev'}-${state.Resource['Fn::GetAtt'][0]}`
+            state.Resource = `arn:aws:lambda:${this.config.region}:${this.config.accountId}:function:${this.service.service}-${this.stage}-${state.Resource['Fn::GetAtt'][0]}`
           }
           break;
         case 'Map':
