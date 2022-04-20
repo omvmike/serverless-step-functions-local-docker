@@ -54,6 +54,7 @@ It also adds an environment variable for each created state machine that contain
 - `waitToStart` (default: `true`) waits on startup until AWS step function emulator is detected on port 8083
   - `true` throws an error and stops serverless if emulator is not detected
   - `false` emits an error to console and keeps serverless running if emulator is not detected
+- `stepFunctionAppHost` (default `localhost`) set this option if stepFunctions emulator runs on another host than localhost
 
 ### Full Config Example
 

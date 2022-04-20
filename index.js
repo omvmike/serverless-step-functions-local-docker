@@ -39,9 +39,13 @@ class ServerlessStepFunctionsLocal {
       this.config.waitToStart = true
     }
 
+    if (this.config.stepFunctionAppHost === undefined) {
+      this.config.stepFunctionAppHost = 'localhost'
+    }
+
     this.stepfunctionsServer = new StepFunctionsLocal(this.config);
 
-    this.stepfunctionsAPI = new AWS.StepFunctions({endpoint: 'http://localhost:8083', region: this.config.region});
+    this.stepfunctionsAPI = new AWS.StepFunctions({endpoint: `http://${this.config.stepFunctionAppHost}:8083`, region: this.config.region});
 
     this.hooks = {
       'offline:start:init': async () => {
@@ -87,8 +91,9 @@ class ServerlessStepFunctionsLocal {
       console.log(chalk.blue('[Serverless Step Functions Local]'), 'Waiting for AWS Step Functions emulator on port 8083');
     }
 
+
     // Wait for server to start
-    await tcpPortUsed.waitUntilUsed(8083, 200, 10000);
+    await tcpPortUsed.waitUntilUsedOnHost(8083, this.config.stepFunctionAppHost, 200, 10000);
     console.log(chalk.blue('[Serverless Step Functions Local]'), 'AWS Step Functions emulator detected on 8083');
   }
 
