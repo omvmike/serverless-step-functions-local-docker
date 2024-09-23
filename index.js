@@ -9,10 +9,14 @@ class ServerlessStepFunctionsLocal {
     this.serverless = serverless;
     this.service = serverless.service;
     this.options = options;
-    this.stage = this.options.stage ?? 'dev';
+    this.stage = this.options.stage;
 
     this.log = serverless.cli.log.bind(serverless.cli);
     this.config = (this.service.custom && this.service.custom.stepFunctionsLocal) || {};
+
+    if (!this.options.stage) {
+      throw new Error('Stage option is required. Please provide --stage <stage>, when run "sls offline start --stage=local"');
+    }
 
     // Check config
     if (!this.config.accountId) {
@@ -55,7 +59,7 @@ class ServerlessStepFunctionsLocal {
 
         const bootstrap = (async () => {
           await this.startStepFunctions();
-          await this.getStepFunctionsFromConfig();
+          await this.getStepFunctionsFromConfigurationInput();
           await this.createEndpoints();
         })()
 
@@ -101,24 +105,17 @@ class ServerlessStepFunctionsLocal {
     return this.stepfunctionsServer.stop();
   }
 
-  async getStepFunctionsFromConfig() {
-    const {servicePath} = this.serverless.config;
+  async getStepFunctionsFromConfigurationInput() {
+    this.stateMachines = this.stateMachineCFARNResolver(this.serverless.configurationInput.stepFunctions.stateMachines);
 
-    if (!servicePath) {
-      throw new Error('service path not found');
-    }
-
-    const configPath = path.join(servicePath, 'serverless.yml');
-
-    const preParsed = await this.serverless.yamlParser.parse(configPath);
-    const parsed = await this.serverless.variables.populateObject(preParsed);
-
-    this.stateMachines = this.stateMachineCFARNResolver(parsed.stepFunctions.stateMachines);
-
-    if (parsed.custom
-      && parsed.custom.stepFunctionsLocal
-      && parsed.custom.stepFunctionsLocal.TaskResourceMapping) {
-        this.replaceTaskResourceMappings(parsed.stepFunctions.stateMachines, parsed.custom.stepFunctionsLocal.TaskResourceMapping);
+    if (this.serverless.configurationInput.custom
+        && this.serverless.configurationInput.custom.stepFunctionsLocal
+        && this.serverless.configurationInput.custom.stepFunctionsLocal.TaskResourceMapping
+    ) {
+      this.replaceTaskResourceMappings(
+          this.serverless.configurationInput.stepFunctions.stateMachines,
+          this.serverless.configurationInput.custom.stepFunctionsLocal.TaskResourceMapping
+      );
     }
   }
 
